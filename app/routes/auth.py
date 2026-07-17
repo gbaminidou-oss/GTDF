@@ -40,15 +40,21 @@ def register():
                 flash(e, "error")
             return render_template("auth/register.html", username=username, email=email, full_name=full_name)
 
-        user = User(username=username, email=email, full_name=full_name)
-        user.set_password(password)
-        db.session.add(user)
-        db.session.flush()
+        try:
+            user = User(username=username, email=email, full_name=full_name)
+            user.set_password(password)
+            db.session.add(user)
+            db.session.flush()
 
-        # Initialise leaderboard entry
-        lb = Leaderboard(user_id=user.id, xp=0)
-        db.session.add(lb)
-        db.session.commit()
+            lb = Leaderboard(user_id=user.id, xp=0)
+            db.session.add(lb)
+            db.session.commit()
+        except Exception as exc:
+            db.session.rollback()
+            flash("Registration failed due to a server error. Please try again.", "error")
+            import sys
+            print(f"[GTDF] Register error: {exc}", file=sys.stderr)
+            return render_template("auth/register.html", username=username, email=email, full_name=full_name)
 
         login_user(user)
         flash("Welcome to GTDF! Start with your pre-assessment.", "success")

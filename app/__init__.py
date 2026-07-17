@@ -42,8 +42,14 @@ def create_app(config_name="default"):
     app.register_blueprint(gamification_bp, url_prefix="/gamification")
     app.register_blueprint(feedback_bp, url_prefix="/feedback")
 
-    # Create all database tables
+    # Import every model so db.create_all() sees all table definitions
     with app.app_context():
+        import app.models.user          # noqa: F401
+        import app.models.module        # noqa: F401
+        import app.models.assessment    # noqa: F401
+        import app.models.gamification  # noqa: F401
+        import app.models.feedback      # noqa: F401
+
         db.create_all()
         _seed_initial_data()
 
@@ -53,4 +59,9 @@ def create_app(config_name="default"):
 def _seed_initial_data():
     """Seed modules, questions and badges on first run."""
     from app.database.seed import seed_all
-    seed_all()
+    try:
+        seed_all()
+    except Exception as exc:
+        db.session.rollback()
+        import sys
+        print(f"[GTDF] Seed skipped or failed: {exc}", file=sys.stderr)
