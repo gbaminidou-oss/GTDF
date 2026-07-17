@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Login — GTDF Platform</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+<div class="auth-page">
+  <div class="auth-left">
+    <div>
+      <div style="font-size:1rem;font-weight:700;color:rgba(255,255,255,.5);letter-spacing:2px;text-transform:uppercase;margin-bottom:32px;">GTDF Platform</div>
+      <h1 class="auth-hero-title">Welcome<br>Back, <span style="color:var(--accent);">Defender.</span></h1>
+      <p class="auth-hero-sub">Continue your personalised cybersecurity awareness journey. Your adaptive learning path is waiting.</p>
+      <div class="auth-features" style="margin-top:40px;">
+        <div class="auth-feature"><div class="auth-feature-icon"><i class="fa-solid fa-shield-halved"></i></div>7 domains — Phishing, SE, Passwords, Browsing &amp; more</div>
+        <div class="auth-feature"><div class="auth-feature-icon"><i class="fa-solid fa-trophy"></i></div>Track XP, badges and leaderboard position</div>
+        <div class="auth-feature"><div class="auth-feature-icon"><i class="fa-solid fa-rotate"></i></div>Adaptive difficulty updates with every answer</div>
+      </div>
+    </div>
+  </div>
+  <div class="auth-right">
+    <div class="auth-card">
+      <div class="auth-logo">GTDF</div>
+      <h2 class="auth-heading">Log In</h2>
+      <p class="auth-sub">Enter your credentials to continue</p>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+          <div class="flash {{ category }}" style="margin-bottom:12px;">
+            <i class="fa-solid {% if category=='error' %}fa-circle-xmark{% else %}fa-circle-info{% endif %}"></i> {{ message }}
+          </div>
+        {% endfor %}
+      {% endwith %}
+
+      <form method="POST" action="{{ url_for('auth.login') }}">
+        <div class="form-group">
+          <label class="form-label">Username or Email</label>
+          <input class="form-control" type="text" name="identifier" required placeholder="username or email" value="{{ identifier or '' }}" autofocus>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input class="form-control" type="password" name="password" required placeholder="Your password">
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:20px;">
+          <input type="checkbox" name="remember" id="remember" style="accent-color:var(--primary-light);width:16px;height:16px;">
+          <label for="remember" style="font-size:.85rem;color:var(--text-secondary);cursor:pointer;">Remember me for 30 days</label>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block btn-lg">
+          <i class="fa-solid fa-right-to-bracket"></i> Log In
+        </button>
+      </form>
+
+      <div class="auth-divider"><span>New to GTDF?</span></div>
+      <a href="{{ url_for('auth.register') }}" class="btn btn-outline btn-block">
+        <i class="fa-solid fa-user-plus"></i> Create Free Account
+      </a>
+      <p style="font-size:.75rem;color:var(--text-muted);text-align:center;margin-top:20px;">
+        GTDF Platform &bull; MSc Dissertation Prototype &bull; Academic Use Only
+      </p>
+    </div>
+  </div>
+</div>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

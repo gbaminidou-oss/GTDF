@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block title %}My Progress{% endblock %}
+{% block page_title %}Training Progress{% endblock %}
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+{% block content %}
+
+{% set completed_count = module_progress_list | selectattr('progress') | selectattr('progress.status', 'equalto', 'completed') | list | length %}
+{% set badge_count = current_user.badges.count() %}
+
+<!-- Summary stats -->
+<div class="stat-grid" style="margin-bottom:28px;">
+  <div class="stat-card">
+    <div class="stat-icon" style="background:var(--accent);"><i class="fa-solid fa-circle-check"></i></div>
+    <div class="stat-info"><div class="value">{{ completed_count }}</div><div class="label">Modules Completed</div></div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon" style="background:var(--warning);"><i class="fa-solid fa-bolt"></i></div>
+    <div class="stat-info"><div class="value">{{ current_user.xp }}</div><div class="label">XP Earned</div></div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon" style="background:var(--primary-light);"><i class="fa-solid fa-medal"></i></div>
+    <div class="stat-info"><div class="value">{{ badge_count }}</div><div class="label">Badges Earned</div></div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon" style="background:#8b5cf6;"><i class="fa-solid fa-fire"></i></div>
+    <div class="stat-info"><div class="value">{{ current_user.streak }}</div><div class="label">Day Streak</div></div>
+  </div>
+</div>
+
+<!-- Pre vs Post comparison chart -->
+{% if has_post %}
+<div class="card" style="margin-bottom:28px;">
+  <div class="card-header"><span class="card-title"><i class="fa-solid fa-chart-bar" style="color:var(--primary-light);margin-right:8px;"></i>Pre vs Post Assessment Comparison</span></div>
+  <div class="card-body">
+    <canvas id="compareChart" height="100"></canvas>
+  </div>
+</div>
+{% endif %}
+
+<!-- Module-by-module breakdown -->
+<div class="card">
+  <div class="card-header"><span class="card-title"><i class="fa-solid fa-list-check" style="color:var(--accent);margin-right:8px;"></i>Module Breakdown</span></div>
+  <div class="card-body" style="padding:0;">
+    <table style="width:100%;border-collapse:collapse;font-size:.875rem;">
+      <thead>
+        <tr style="background:var(--surface-2);border-bottom:1px solid var(--border);">
+          <th style="padding:12px 20px;text-align:left;font-weight:600;color:var(--text-secondary);">Module</th>
+          <th style="padding:12px 16px;text-align:center;font-weight:600;color:var(--text-secondary);">Status</th>
+          <th style="padding:12px 16px;text-align:center;font-weight:600;color:var(--text-secondary);">Difficulty</th>
+          <th style="padding:12px 16px;text-align:center;font-weight:600;color:var(--text-secondary);">Score</th>
+          <th style="padding:12px 16px;text-align:center;font-weight:600;color:var(--text-secondary);">XP Earned</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in module_progress_list %}
+          {% set p = item.progress %}
+          {% set status = p.status if p else 'locked' %}
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:14px 20px;">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div style="width:32px;height:32px;border-radius:8px;background:{{ item.module.color }};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <i class="fa-solid {{ item.module.icon }}" style="color:#fff;font-size:.8rem;"></i>
+              </div>
+              <div>
+                <div style="font-weight:500;">{{ item.module.title }}</div>
+                <div style="font-size:.75rem;color:var(--text-muted);">{{ item.module.domain.replace('_',' ').title() }}</div>
+              </div>
+            </div>
+          </td>
+          <td style="padding:14px 16px;text-align:center;">
+            <span class="status-badge {{ status }}">{{ status.replace('_',' ').title() }}</span>
+          </td>
+          <td style="padding:14px 16px;text-align:center;color:var(--text-secondary);">
+            {{ p.current_difficulty.title() if p and p.current_difficulty else '—' }}
+          </td>
+          <td style="padding:14px 16px;text-align:center;">
+            {% if p and p.score %}
+              <div style="font-weight:600;color:{% if p.score>=75 %}var(--accent){% elif p.score>=50 %}var(--warning){% else %}var(--danger){% endif %};">
+                {{ p.score|round(0)|int }}%
+              </div>
+            {% else %}—{% endif %}
+          </td>
+          <td style="padding:14px 16px;text-align:center;font-weight:500;color:var(--warning);">
+            {{ ('+' ~ p.xp_earned ~ ' XP') if p and p.xp_earned else '—' }}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}
+{% block scripts %}
+{% if has_post %}
+<script>
+const ctx = document.getElementById('compareChart').getContext('2d');
+new Chart(ctx, {
+  type: 'bar',
+  data: {
+    labels: {{ chart_labels|safe }},
+    datasets: [
+      { label: 'Pre-Assessment', data: {{ pre_data|safe }}, backgroundColor: 'rgba(37,99,235,.6)', borderColor: '#2563eb', borderWidth: 1, borderRadius: 4 },
+      { label: 'Post-Assessment', data: {{ post_data|safe }}, backgroundColor: 'rgba(16,185,129,.6)', borderColor: '#10b981', borderWidth: 1, borderRadius: 4 }
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { position: 'top', labels: { font: { family: 'Poppins', size: 12 } } } },
+    scales: { y: { min: 0, max: 100, ticks: { stepSize: 25, callback: v => v + '%' } } }
+  }
+});
+</script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}Learning Path{% endblock %}
+{% block page_title %}Your Learning Path{% endblock %}
+{% block content %}
+
+<div class="card" style="margin-bottom:24px;border-left:4px solid var(--primary-light);">
+  <div class="card-body" style="padding:16px 24px;">
+    <p style="font-size:.875rem;color:var(--text-secondary);margin:0;">
+      Your learning path is personalised by the <strong>GTDF Adaptive Rule Engine</strong> based on your pre-assessment scores.
+      Modules are ordered by your weakest domains first. Each module must be completed to unlock the next.
+    </p>
+  </div>
+</div>
+
+<!-- Progress overview -->
+<div class="card" style="margin-bottom:28px;">
+  <div class="card-body" style="padding:20px 24px;">
+    <div class="flex-between" style="margin-bottom:10px;">
+      <div>
+        <div style="font-weight:600;font-size:.9rem;">Overall Completion</div>
+        <div style="font-size:.78rem;color:var(--text-muted);">{{ completed_count }} of {{ total }} modules finished</div>
+      </div>
+      <div style="font-size:1.4rem;font-weight:700;color:var(--primary-light);">{{ overall_pct }}%</div>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill accent" style="width:{{ overall_pct }}%;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Module cards -->
+<div style="display:flex;flex-direction:column;gap:16px;">
+  {% for item in modules_with_progress %}
+    {% set m = item.module %}
+    {% set status = item.status %}
+    <div class="card {% if status == 'locked' %}locked{% endif %}" style="border-left:4px solid {{ m.color }};">
+      <div class="card-body" style="padding:20px 24px;">
+        <div style="display:flex;align-items:flex-start;gap:16px;">
+          <!-- Order bubble + icon -->
+          <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0;">
+            <div style="width:44px;height:44px;border-radius:12px;background:{{ m.color }};display:flex;align-items:center;justify-content:center;">
+              <i class="fa-solid {{ m.icon }}" style="color:#fff;font-size:1.1rem;"></i>
+            </div>
+            <div style="font-size:.72rem;font-weight:700;color:var(--text-muted);">M{{ m.order }}</div>
+          </div>
+
+          <!-- Content -->
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px;">
+              <div style="font-size:1rem;font-weight:700;">{{ m.title }}</div>
+              <span class="status-badge {{ status }}">
+                {% if status=='completed' %}<i class="fa-solid fa-check"></i> Completed
+                {% elif status=='in_progress' %}<i class="fa-solid fa-spinner"></i> In Progress
+                {% elif status=='available' %}<i class="fa-solid fa-play"></i> Available
+                {% else %}<i class="fa-solid fa-lock"></i> Locked{% endif %}
+              </span>
+            </div>
+            <div style="font-size:.78rem;color:var(--text-muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;">{{ m.domain.replace('_',' ') }}</div>
+            <div style="font-size:.875rem;color:var(--text-secondary);line-height:1.5;margin-bottom:12px;">{{ m.description }}</div>
+
+            <!-- Meta row -->
+            <div style="display:flex;gap:20px;flex-wrap:wrap;font-size:.78rem;color:var(--text-muted);margin-bottom:12px;">
+              <span><i class="fa-solid fa-bolt" style="color:var(--warning);margin-right:4px;"></i>{{ m.xp_reward }} XP</span>
+              <span><i class="fa-solid fa-medal" style="color:var(--warning);margin-right:4px;"></i>{{ m.badge_name }} badge</span>
+              {% if item.progress and item.progress.current_difficulty %}
+                <span><i class="fa-solid fa-gauge-high" style="color:var(--primary-light);margin-right:4px;"></i>{{ item.progress.current_difficulty.title() }} difficulty</span>
+              {% endif %}
+            </div>
+
+            {% if item.progress and item.progress.score %}
+              <div style="margin-bottom:12px;">
+                <div style="font-size:.72rem;color:var(--text-muted);margin-bottom:4px;">Score: {{ item.progress.score|round(0)|int }}%</div>
+                <div class="progress-track" style="height:5px;">
+                  <div class="progress-fill accent" style="width:{{ item.progress.score }}%;"></div>
+                </div>
+              </div>
+            {% endif %}
+
+            {% if status != 'locked' %}
+              <a href="{{ url_for('modules.module_detail', module_id=m.id) }}" class="btn btn-primary btn-sm">
+                {% if status == 'completed' %}<i class="fa-solid fa-eye"></i> Review Module
+                {% elif status == 'in_progress' %}<i class="fa-solid fa-play"></i> Continue
+                {% else %}<i class="fa-solid fa-play"></i> Start Module{% endif %}
+              </a>
+            {% else %}
+              <button class="btn btn-sm" style="background:var(--surface-3);color:var(--text-muted);cursor:not-allowed;" disabled>
+                <i class="fa-solid fa-lock"></i> Complete previous module to unlock
+              </button>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}GTDF Platform{% endblock %} — Cybersecurity Awareness Training</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  {% block head %}{% endblock %}
+</head>
+<body>
+
+<div class="app-layout">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-text">GTDF</div>
+      <div class="logo-sub">Cybersecurity Training</div>
+    </div>
+
+    {% if current_user.is_authenticated %}
+    <div class="sidebar-user">
+      <div class="sidebar-avatar">{{ current_user.username[0].upper() }}</div>
+      <div class="sidebar-user-info">
+        <div class="name">{{ current_user.username }}</div>
+        <div class="level">Level {{ current_user.level }} &bull; {{ current_user.xp }} XP</div>
+      </div>
+    </div>
+    <div class="sidebar-xp-bar">
+      <div class="xp-label">
+        <span>XP Progress</span>
+        <span>{{ current_user.xp_in_current_level }}/100</span>
+      </div>
+      <div class="xp-track">
+        <div class="xp-fill" data-pct="{{ current_user.xp_progress_pct }}" style="width:{{ current_user.xp_progress_pct }}%"></div>
+      </div>
+    </div>
+    {% endif %}
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main</div>
+      <a href="{{ url_for('dashboard.home') }}" class="nav-item {% if request.endpoint == 'dashboard.home' %}active{% endif %}">
+        <i class="fa-solid fa-house"></i> Dashboard
+      </a>
+      <a href="{{ url_for('modules.learning_path') }}" class="nav-item {% if 'modules' in request.endpoint %}active{% endif %}">
+        <i class="fa-solid fa-graduation-cap"></i> Learning Path
+      </a>
+      <a href="{{ url_for('dashboard.progress') }}" class="nav-item {% if request.endpoint == 'dashboard.progress' %}active{% endif %}">
+        <i class="fa-solid fa-chart-line"></i> My Progress
+      </a>
+      <a href="{{ url_for('feedback.growth') }}" class="nav-item {% if 'feedback' in request.endpoint %}active{% endif %}">
+        <i class="fa-solid fa-arrow-trend-up"></i> Growth Report
+      </a>
+
+      <div class="nav-section-label" style="margin-top:8px;">Gamification</div>
+      <a href="{{ url_for('gamification.leaderboard') }}" class="nav-item {% if request.endpoint == 'gamification.leaderboard' %}active{% endif %}">
+        <i class="fa-solid fa-trophy"></i> Leaderboard
+      </a>
+      <a href="{{ url_for('gamification.achievements') }}" class="nav-item {% if request.endpoint == 'gamification.achievements' %}active{% endif %}">
+        <i class="fa-solid fa-medal"></i> Achievements
+      </a>
+
+      <div class="nav-section-label" style="margin-top:8px;">Assessment</div>
+      <a href="{{ url_for('assessment.post_assessment') }}" class="nav-item {% if 'post' in request.endpoint %}active{% endif %}">
+        <i class="fa-solid fa-clipboard-check"></i> Post-Assessment
+      </a>
+
+      <div class="nav-section-label" style="margin-top:8px;">Account</div>
+      <a href="{{ url_for('auth.profile') }}" class="nav-item {% if request.endpoint == 'auth.profile' %}active{% endif %}">
+        <i class="fa-solid fa-user"></i> Profile
+      </a>
+      <a href="{{ url_for('auth.settings') }}" class="nav-item {% if request.endpoint == 'auth.settings' %}active{% endif %}">
+        <i class="fa-solid fa-gear"></i> Settings
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <a href="{{ url_for('auth.logout') }}" class="nav-item" style="padding:8px 0;">
+        <i class="fa-solid fa-right-from-bracket"></i> Log Out
+      </a>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="main-content">
+    <header class="top-bar">
+      <div style="display:flex;align-items:center;gap:16px;">
+        <button id="menu-toggle" style="background:none;border:none;font-size:1.2rem;color:var(--text-secondary);display:none;" aria-label="Menu">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+        <span class="top-bar-title">{% block page_title %}Dashboard{% endblock %}</span>
+      </div>
+      <div class="top-bar-actions">
+        {% if current_user.is_authenticated %}
+        <span class="xp-pill"><i class="fa-solid fa-bolt"></i> {{ current_user.xp }} XP</span>
+        <span style="font-size:.85rem;color:var(--text-secondary);">
+          <i class="fa-solid fa-layer-group"></i> Lv {{ current_user.level }}
+        </span>
+        {% endif %}
+      </div>
+    </header>
+
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-container">
+          {% for category, message in messages %}
+            <div class="flash {{ category }}">
+              <i class="fa-solid {% if category == 'success' %}fa-circle-check{% elif category == 'error' %}fa-circle-xmark{% elif category == 'warning' %}fa-triangle-exclamation{% else %}fa-circle-info{% endif %}"></i>
+              {{ message }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <main class="page-content fade-in">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

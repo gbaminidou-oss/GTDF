@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}Assessment Result{% endblock %}
+{% block page_title %}Assessment Result{% endblock %}
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+{% block content %}
+
+<!-- Score banner -->
+<div class="card" style="margin-bottom:24px;background:linear-gradient(135deg,var(--primary) 0%,var(--primary-light) 100%);border:none;">
+  <div class="card-body" style="padding:32px;text-align:center;color:#fff;">
+    <div style="font-size:.85rem;font-weight:600;letter-spacing:1px;text-transform:uppercase;opacity:.7;margin-bottom:8px;">Overall Score</div>
+    <div style="font-size:4rem;font-weight:800;line-height:1;margin-bottom:8px;">{{ overall_score|round(0)|int }}%</div>
+    <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.15);padding:6px 16px;border-radius:99px;font-size:.9rem;">
+      <i class="fa-solid fa-shield-halved"></i>
+      Risk Level: <strong>{{ risk_level.title() }}</strong>
+    </div>
+    {% if xp_awarded %}
+      <div style="margin-top:16px;font-size:.85rem;opacity:.85;">
+        <i class="fa-solid fa-bolt" style="color:var(--warning);"></i> +{{ xp_awarded }} XP awarded for completing the assessment
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="grid-2" style="margin-bottom:24px;">
+  <!-- Radar chart -->
+  <div class="card">
+    <div class="card-header"><span class="card-title"><i class="fa-solid fa-spider" style="color:var(--primary-light);margin-right:8px;"></i>Domain Profile</span></div>
+    <div class="card-body">
+      <canvas id="radarChart" height="260"></canvas>
+    </div>
+  </div>
+
+  <!-- Domain table -->
+  <div class="card">
+    <div class="card-header"><span class="card-title"><i class="fa-solid fa-list" style="color:var(--accent);margin-right:8px;"></i>Domain Scores</span></div>
+    <div class="card-body" style="padding:0;">
+      <table style="width:100%;border-collapse:collapse;font-size:.85rem;">
+        {% for item in domain_results %}
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:12px 16px;">
+            <div style="font-weight:500;">{{ item.domain.replace('_',' ').title() }}</div>
+            <div style="font-size:.73rem;color:var(--text-muted);">{{ item.correct }}/{{ item.total }} correct</div>
+          </td>
+          <td style="padding:12px 16px;width:120px;">
+            <div class="progress-track" style="margin-bottom:4px;">
+              <div class="progress-fill {% if item.score>=75 %}accent{% elif item.score>=40 %}warning{% else %}danger{% endif %}"
+                   style="width:{{ item.score }}%;"></div>
+            </div>
+            <div style="font-size:.73rem;text-align:right;font-weight:600;
+              color:{% if item.score>=75 %}var(--accent){% elif item.score>=40 %}var(--warning){% else %}var(--danger){% endif %};">
+              {{ item.score|round(0)|int }}%
+            </div>
+          </td>
+          <td style="padding:12px 12px;width:90px;">
+            <span class="status-badge {{ item.level_assigned }}">{{ item.level_assigned.title() }}</span>
+          </td>
+        </tr>
+        {% endfor %}
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Adaptive recommendations -->
+<div class="card" style="margin-bottom:24px;">
+  <div class="card-header"><span class="card-title"><i class="fa-solid fa-road" style="color:var(--warning);margin-right:8px;"></i>Your Adaptive Learning Path</span></div>
+  <div class="card-body">
+    <p style="font-size:.875rem;color:var(--text-secondary);margin:0 0 16px;">
+      Based on your results, the GTDF Adaptive Rule Engine has prioritised your modules as follows
+      (weakest domains first). Difficulty is adjusted per domain level.
+    </p>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      {% for rec in recommendations %}
+        <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border:1px solid var(--border);border-radius:10px;background:var(--surface-2);">
+          <div style="width:28px;height:28px;border-radius:50%;background:var(--primary-light);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:.85rem;flex-shrink:0;">{{ loop.index }}</div>
+          <div style="flex:1;">
+            <div style="font-weight:600;font-size:.875rem;">{{ rec.domain.replace('_',' ').title() }}</div>
+            <div style="font-size:.75rem;color:var(--text-muted);">{{ rec.reason }}</div>
+          </div>
+          <span class="status-badge {{ rec.level }}">{{ rec.level.title() }}</span>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<div style="text-align:center;">
+  <a href="{{ url_for('modules.learning_path') }}" class="btn btn-primary btn-lg">
+    <i class="fa-solid fa-play"></i> Start Your Learning Path
+  </a>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const ctx = document.getElementById('radarChart').getContext('2d');
+new Chart(ctx, {
+  type: 'radar',
+  data: {
+    labels: {{ chart_labels|safe }},
+    datasets: [{
+      label: 'Your Score (%)',
+      data: {{ chart_data|safe }},
+      backgroundColor: 'rgba(37,99,235,.15)',
+      borderColor: '#2563eb',
+      borderWidth: 2,
+      pointBackgroundColor: '#2563eb',
+      pointRadius: 4,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      r: {
+        min: 0, max: 100,
+        ticks: { stepSize: 25, font: { size: 10 } },
+        pointLabels: { font: { size: 11, family: 'Poppins' } },
+      }
+    }
+  }
+});
+</script>
+{% endblock %}
