@@ -43,6 +43,11 @@ class DevelopmentConfig(Config):
     TESTING = False
 
 
+class ProductionConfig(Config):
+    DEBUG = False
+    TESTING = False
+
+
 class TestingConfig(Config):
     TESTING = True
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
@@ -50,6 +55,7 @@ class TestingConfig(Config):
 
 config = {
     "development": DevelopmentConfig,
+    "production": ProductionConfig,
     "testing": TestingConfig,
     "default": DevelopmentConfig,
 }
