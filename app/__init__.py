@@ -26,12 +26,9 @@ def create_app(config_name="default"):
     login_manager.login_message = "Please log in to access this page."
     login_manager.login_message_category = "info"
 
-    # Import all models so SQLAlchemy metadata is complete before any create_all
-    import app.models.user          # noqa: F401
-    import app.models.module        # noqa: F401
-    import app.models.assessment    # noqa: F401
-    import app.models.gamification  # noqa: F401
-    import app.models.feedback      # noqa: F401
+    # Import all models using relative imports so the local 'app' Flask
+    # instance is not shadowed by the 'app' package name.
+    from .models import user, module, assessment, gamification, feedback  # noqa: F401
 
     # Register blueprints
     from app.routes.auth import auth_bp
